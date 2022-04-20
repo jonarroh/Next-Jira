@@ -7,10 +7,14 @@ import { useContext } from 'react';
 import { EntriesProvider } from '../context/entries';
 
 function MyApp({ Component, pageProps }: AppProps) {
-	const { sidemenuOpen } = useContext(UIContext);
+	const { sidemenuOpen, isAddingEntry, isDragging } =
+		useContext(UIContext);
 	return (
 		<EntriesProvider entries={[]}>
-			<UIProvider sidemenuOpen={sidemenuOpen}>
+			<UIProvider
+				sidemenuOpen={sidemenuOpen}
+				isAddingEntry={isAddingEntry}
+				isDragging={isDragging}>
 				<ThemeProvider theme={darkTheme}>
 					<CssBaseline />
 					<Component {...pageProps} />
