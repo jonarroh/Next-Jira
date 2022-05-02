@@ -1,33 +1,15 @@
-import { FC, useReducer } from 'react';
-import { Entry } from '../../interface';
-import { EntriesContext, entriesReducer } from './';
+import { FC, useReducer, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { EntriesContext, entriesReducer } from './';
+import { entriesApi } from '../../apis';
+import { Entry } from '../../interface';
 
 export interface EntriesState {
 	entries: Entry[];
 	children?: React.ReactNode;
 }
 const Entries_INITIAL_STATE: EntriesState = {
-	entries: [
-		{
-			_id: uuidv4(),
-			description: 'Lorem ipsum dolor sit amet',
-			status: 'pending',
-			createdAt: Date.now()
-		},
-		{
-			_id: uuidv4(),
-			description: 'Lorem ipsum dolor sit amet ilse',
-			status: 'finished',
-			createdAt: Date.now() - 100000
-		},
-		{
-			_id: uuidv4(),
-			description: 'Lorem ipsum dolor sit amet pol',
-			status: 'in-progress',
-			createdAt: Date.now() - 25000
-		}
-	]
+	entries: []
 };
 
 export const EntriesProvider: FC<EntriesState> = ({ children }) => {
@@ -36,18 +18,37 @@ export const EntriesProvider: FC<EntriesState> = ({ children }) => {
 		Entries_INITIAL_STATE
 	);
 
-	const addNewEntry = (description: string) => {
-		const newEntry: Entry = {
-			_id: uuidv4(),
-			description,
-			createdAt: Date.now(),
-			status: 'pending'
-		};
-		dispatch({ type: '[Entry] Add-Entry', payload: newEntry });
+	const addNewEntry = async (description: string) => {
+		try {
+			const { data } = await entriesApi.post('/entries', {
+				description
+			});
+			dispatch({ type: '[Entry] Add-Entry', payload: data });
+		} catch (error) {
+			console.error(error);
+		}
 	};
-	const updateEntry = (entry: Entry) => {
-		dispatch({ type: '[Entry] Entry-Updated', payload: entry });
+
+	const updateEntry = async ({ _id, status, description }: Entry) => {
+		try {
+			const { data } = await entriesApi.put<Entry>(
+				`/entries/${_id}`,
+				{ description, status }
+			);
+			dispatch({ type: '[Entry] Entry-Updated', payload: data });
+		} catch (error) {
+			console.log('error en la base de datos');
+		}
 	};
+
+	const refreshEntries = async () => {
+		const { data } = await entriesApi.get<Entry[]>('/entries');
+		dispatch({ type: '[Entry] Refresh-Data', payload: data });
+	};
+
+	useEffect(() => {
+		refreshEntries();
+	}, []);
 
 	return (
 		<EntriesContext.Provider
